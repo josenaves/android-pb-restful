@@ -5,9 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Base64;
 import android.util.Log;
 
 import com.josenaves.android.pb.restful.Image;
+import com.josenaves.android.pb.restful.ImageBase64;
 import com.josenaves.android.pb.restful.StorageUtils;
 
 import java.util.ArrayList;
@@ -42,19 +44,28 @@ public final class ImagesDataSource {
 
     public void createImage(Image image) {
         Log.d(TAG, "createImage...");
+        saveImage(image.id, image.name, image.date, image.image_data.toByteArray());
+    }
 
+    public void createImageBase64(ImageBase64 image) {
+        Log.d(TAG, "createImageBase64...");
+        byte[] imageData = Base64.decode(image.image_data, Base64.DEFAULT);
+        saveImage(image.id, image.name, image.datetime, imageData);
+    }
+
+    private void saveImage(String uuid, String name, String datetime, byte[] imageData) {
         String packageName= dbHelper.getContext().getApplicationContext().getPackageName();
         String imageLocation = StorageUtils.saveFileInExternalStorage(
                 packageName,
-                image.name,
-                image.image_data.toByteArray());
+                name,
+                imageData);
 
         if (imageLocation != null) {
             //database.beginTransaction();
             ContentValues values = new ContentValues();
-            values.put(ImagesDatabaseHelper.COLUMN_ID, image.id);
-            values.put(ImagesDatabaseHelper.COLUMN_NAME, image.name);
-            values.put(ImagesDatabaseHelper.COLUMN_DATE, image.date);
+            values.put(ImagesDatabaseHelper.COLUMN_ID, uuid);
+            values.put(ImagesDatabaseHelper.COLUMN_NAME, name);
+            values.put(ImagesDatabaseHelper.COLUMN_DATE, datetime);
             values.put(ImagesDatabaseHelper.COLUMN_IMAGE, imageLocation);
 
             long id = database.insert(ImagesDatabaseHelper.TABLE_IMAGES, null, values);

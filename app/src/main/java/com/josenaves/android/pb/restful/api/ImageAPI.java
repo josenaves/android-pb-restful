@@ -19,7 +19,6 @@ public class ImageAPI {
     //private static final String BASE_URL = "http://192.168.0.16:9090/";
     //private static final String BASE_URL = PreferencesUtils.getServerHost();
 
-
     private Retrofit retrofit;
 
     public ImageAPI(Context context) {
@@ -29,10 +28,9 @@ public class ImageAPI {
                 .build();
     }
 
-
     public Image getRandomImage() {
         ImageService service = retrofit.create(ImageService.class);
-        Call<Image> image = service.getImageData();
+        Call<Image> image = service.getRandomImage();
         try {
             Response<Image> response = image.execute();
             return response.body();
@@ -43,4 +41,16 @@ public class ImageAPI {
         return null;
     }
 
+    public Image getFlorianoplisImage() {
+        ImageService service = retrofit.create(ImageService.class);
+        Call<Image> image = service.getImageFlorianopolis();
+        try {
+            Response<Image> response = image.execute();
+            return response.body();
+        }
+        catch (IOException io) {
+            Log.e(TAG, io.getMessage());
+        }
+        return null;
+    }
 }

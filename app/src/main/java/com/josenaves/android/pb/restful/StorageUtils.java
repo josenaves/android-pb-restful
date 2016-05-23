@@ -86,7 +86,6 @@ public final class StorageUtils {
 
         FileOutputStream fos = null;
         try {
-            //fos = context.openFileOutput(testFile.getAbsolutePath(), Context.MODE_WORLD_READABLE);
             fos = new FileOutputStream(fileToBeSaved);
             fos.write(data);
             fos.close();
@@ -111,7 +110,6 @@ public final class StorageUtils {
     }
 
     public static void localFile(Context context) {
-
         try {
             // Use Activity method to create a file in the writeable directory
             FileOutputStream fos = context.openFileOutput("filename", Context.MODE_WORLD_WRITEABLE);
@@ -123,7 +121,6 @@ public final class StorageUtils {
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
-
     }
 
 }

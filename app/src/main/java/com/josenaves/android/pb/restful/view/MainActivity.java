@@ -10,13 +10,17 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.josenaves.android.pb.restful.Image;
+import com.josenaves.android.pb.restful.ImageBase64;
 import com.josenaves.android.pb.restful.R;
 import com.josenaves.android.pb.restful.api.ImageAPI;
+import com.josenaves.android.pb.restful.api.ImageBase64API;
 import com.josenaves.android.pb.restful.data.ImagesDataSource;
-import java.io.IOException;
+
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,8 +29,11 @@ public class MainActivity extends AppCompatActivity {
     private ImagesDataSource dataSource;
 
     private CoordinatorLayout coordinatorLayout;
-    private FloatingActionButton fab;
-    private FloatingActionButton fabBatch;
+    private FloatingActionButton fabProtocolBuffers;
+    private FloatingActionButton fabBase64;
+
+    private Button buttonBatch64;
+    private Button buttonBatchProtocolBuffers;
 
     private TextView textId;
     private TextView textName;
@@ -34,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView textSize;
 
     private ImageAPI imageAPI;
+    private ImageBase64API imageBase64API;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // prepare database to use
+        dataSource = new ImagesDataSource(this);
+
+        // make api client
+        imageAPI = new ImageAPI(this);
+        imageBase64API = new ImageBase64API(this);
+
         coordinatorLayout = (CoordinatorLayout)findViewById(R.id.coordinator_layout);
 
         textId = (TextView)findViewById(R.id.text_id);
@@ -49,37 +64,104 @@ public class MainActivity extends AppCompatActivity {
         textDate = (TextView)findViewById(R.id.text_date);
         textSize = (TextView)findViewById(R.id.text_size);
 
-        // prepare database to use
-        dataSource = new ImagesDataSource(this);
-
-        // make api client
-        imageAPI = new ImageAPI(this);
-
-        fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        fabProtocolBuffers = (FloatingActionButton) findViewById(R.id.fab);
+        fabProtocolBuffers.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "Sending random data to server");
+                Log.d(TAG, "Getting random image from server...");
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        //byte[] imageBuffer = imageAPI.getRandomImage();
-                        //decode(imageBuffer);
                         save(imageAPI.getRandomImage());
                     }
                 }).start();
             }
         });
 
-
-        fabBatch = (FloatingActionButton) findViewById(R.id.fabSaveBatch);
-        fabBatch.setOnClickListener(new View.OnClickListener() {
+        fabBase64 = (FloatingActionButton) findViewById(R.id.fabSaveBatch);
+        fabBase64.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d(TAG, "Getting base64 image from server...");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        save(imageBase64API.getFlorianopolisBase64Image());
+                    }
+                }).start();
 
             }
         });
 
+        buttonBatch64 = (Button) findViewById(R.id.button_base64_batch);
+        buttonBatch64.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "::: Benchmark Batch Base64");
+                Log.d(TAG, "Get florianopolis image from server (500 times)...");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        long totalApi = 0, totalDatabase = 0;
+                        long ini, end;
+                        ImageBase64 image;
+                        for (int i = 0; i < 500; i++) {
+                            ini = Calendar.getInstance().getTimeInMillis();
+                            image = imageBase64API.getFlorianopolisBase64Image();
+                            end = Calendar.getInstance().getTimeInMillis();
+                            totalApi += end - ini;
+
+                            ini = Calendar.getInstance().getTimeInMillis();
+                            save(image);
+                            end = Calendar.getInstance().getTimeInMillis();
+                            totalDatabase += end - ini;
+                        }
+
+                        long totalTime = totalApi + totalDatabase;
+                        Log.i(TAG, ":::::::::::: Benchmark Base64");
+                        Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
+                        Log.i(TAG, ":::::::::::: Total API = " + totalApi + " milliseconds");
+                        Log.i(TAG, ":::::::::::: Total DB = " + totalDatabase + " milliseconds");
+                    }
+                }).start();
+
+            }
+        });
+
+        buttonBatchProtocolBuffers = (Button) findViewById(R.id.button_pb_batch);
+        buttonBatchProtocolBuffers.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "::: Benchmark Batch Protocol Buffers");
+                Log.d(TAG, "Get florianopolis image from server (500 times)...");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        long totalApi = 0, totalDatabase = 0;
+                        long ini, end;
+                        Image image;
+                        for (int i = 0; i < 500; i++) {
+                            ini = Calendar.getInstance().getTimeInMillis();
+                            image = imageAPI.getFlorianoplisImage();
+                            end = Calendar.getInstance().getTimeInMillis();
+                            totalApi += end - ini;
+
+                            ini = Calendar.getInstance().getTimeInMillis();
+                            save(image);
+                            end = Calendar.getInstance().getTimeInMillis();
+                            totalDatabase += end - ini;
+                        }
+
+                        long totalTime = totalApi + totalDatabase;
+                        Log.i(TAG, ":::::::::::: Benchmark Protocol Buffers");
+                        Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
+                        Log.i(TAG, ":::::::::::: Total API = " + totalApi + " milliseconds");
+                        Log.i(TAG, ":::::::::::: Total DB = " + totalDatabase + " milliseconds");
+
+                    }
+                }).start();
+            }
+        });
     }
 
     @Override
@@ -96,54 +178,18 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-
         if (id == R.id.action_settings) {
             Intent prefsIntent = new Intent(this, SettingsActivity.class);
             startActivity(prefsIntent);
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
-
-    /**
-     * Decode bytes and save the data into database and image in storage
-     * @param buffer
-     */
-    private void decode(byte[] buffer) {
-        try {
-
-            final Image image = Image.ADAPTER.decode(buffer);
-
-            Log.d(TAG, image.toString());
-
-            // persist the image
-            dataSource.open();
-            dataSource.createImage(image);
-            //Log.d(TAG, "Records on database: " + dataSource.getAllImages().size());
-            dataSource.close();
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    textId.setText("ID: " + image.id);
-                    textName.setText("Name: " + image.name);
-                    textDate.setText("Date: " + image.date);
-                    textSize.setText("Size: " + image.image_data.size() + " bytes");
-                }
-            });
-        }
-        catch (IOException io) {
-            Log.e(TAG, "Error decoding message - " + io.getMessage());
-        }
-    }
-
 
     private void save(final Image image) {
         // persist the image
         dataSource.open();
         dataSource.createImage(image);
-        //Log.d(TAG, "Records on database: " + dataSource.getAllImages().size());
         dataSource.close();
 
         runOnUiThread(new Runnable() {
@@ -153,6 +199,23 @@ public class MainActivity extends AppCompatActivity {
                 textName.setText("Name: " + image.name);
                 textDate.setText("Date: " + image.date);
                 textSize.setText("Size: " + image.image_data.size() + " bytes");
+            }
+        });
+    }
+
+    private void save(final ImageBase64 image) {
+        // persist the image
+        dataSource.open();
+        dataSource.createImageBase64(image);
+        dataSource.close();
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textId.setText("ID: " + image.id);
+                textName.setText("Name: " + image.name);
+                textDate.setText("Date: " + image.datetime);
+                textSize.setText("Size: " + image.image_data.length() + " bytes");
             }
         });
     }
