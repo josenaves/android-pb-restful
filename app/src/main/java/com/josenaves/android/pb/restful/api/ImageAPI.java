@@ -22,8 +22,11 @@ public class ImageAPI {
     private Retrofit retrofit;
 
     public ImageAPI(Context context) {
+        String host = String.format("http://%s:%s/",
+                PreferencesUtils.getHost(context), PreferencesUtils.getHttpPort(context));
+
         retrofit = new Retrofit.Builder()
-                .baseUrl(PreferencesUtils.getServerHost(context))
+                .baseUrl(host)
                 .addConverterFactory(WireConverterFactory.create())
                 .build();
     }

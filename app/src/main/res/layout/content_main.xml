@@ -40,6 +40,14 @@
         android:layout_below="@id/text_date"
         android:text="Size:" />
 
+    <Button
+        android:id="@+id/button_websocket_batch"
+        android:text="Batch WebSocket"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="150dp" />
 
     <Button
         android:id="@+id/button_base64_batch"

@@ -11,6 +11,20 @@
             android:summary="@string/summary_edittext_host"
             android:dialogTitle="@string/dialog_title_host" />
 
+        <EditTextPreference
+            android:key="pref_http_port"
+            android:defaultValue="@string/default_http_port"
+            android:title="@string/title_edittext_http_port"
+            android:summary="@string/summary_edittext_http_port"
+            android:dialogTitle="@string/dialog_http_port" />
+
+        <EditTextPreference
+            android:key="pref_ws_port"
+            android:defaultValue="@string/default_ws_port"
+            android:title="@string/title_edittext_ws_port"
+            android:summary="@string/summary_edittext_ws_port"
+            android:dialogTitle="@string/dialog_ws_port" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -1,5 +1,6 @@
 package com.josenaves.android.pb.restful.view;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
@@ -18,13 +19,19 @@ import com.josenaves.android.pb.restful.ImageBase64;
 import com.josenaves.android.pb.restful.R;
 import com.josenaves.android.pb.restful.api.ImageAPI;
 import com.josenaves.android.pb.restful.api.ImageBase64API;
+import com.josenaves.android.pb.restful.api.WebSocketAPI;
+import com.josenaves.android.pb.restful.api.WebSocketService;
 import com.josenaves.android.pb.restful.data.ImagesDataSource;
 
+import java.io.IOException;
 import java.util.Calendar;
+import java.util.concurrent.TimeoutException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements WebSocketAPI {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    private static final int TOTAL_REQUESTS = 500;
 
     private ImagesDataSource dataSource;
 
@@ -34,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button buttonBatch64;
     private Button buttonBatchProtocolBuffers;
+    private Button buttonBatchWebSocket;
 
     private TextView textId;
     private TextView textName;
@@ -42,6 +50,17 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageAPI imageAPI;
     private ImageBase64API imageBase64API;
+    private WebSocketService webSocketAPI;
+
+    class Benchmark {
+        long totalDatabase = 0;
+        long totalAPI = 0;
+        long startTime = 0;
+        long totalResponses = 0;
+        boolean isFinished = false;
+    };
+
+    final Benchmark benchmark = new Benchmark();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
         // make api client
         imageAPI = new ImageAPI(this);
         imageBase64API = new ImageBase64API(this);
+        webSocketAPI = new WebSocketService(this);
 
         coordinatorLayout = (CoordinatorLayout)findViewById(R.id.coordinator_layout);
 
@@ -89,7 +109,6 @@ public class MainActivity extends AppCompatActivity {
                         save(imageBase64API.getFlorianopolisBase64Image());
                     }
                 }).start();
-
             }
         });
 
@@ -124,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, ":::::::::::: Total DB = " + totalDatabase + " milliseconds");
                     }
                 }).start();
-
             }
         });
 
@@ -158,6 +176,27 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, ":::::::::::: Total API = " + totalApi + " milliseconds");
                         Log.i(TAG, ":::::::::::: Total DB = " + totalDatabase + " milliseconds");
 
+                    }
+                }).start();
+            }
+        });
+
+        buttonBatchWebSocket = (Button) findViewById(R.id.button_websocket_batch);
+        buttonBatchWebSocket.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "::: Benchmark Batch WebSockets");
+                Log.d(TAG, "Get florianopolis image from server (500 times)...");
+
+                benchmark.isFinished = false;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        benchmark.startTime = Calendar.getInstance().getTimeInMillis();
+                        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+                            webSocketAPI.request();
+                        }
+                        benchmark.isFinished = true;
                     }
                 }).start();
             }
@@ -220,4 +259,42 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onTimeout(TimeoutException e) {
+        Log.e(TAG, "WebSocket - timeout error:" + e.getMessage());
+    }
+
+    @Override
+    public void onResponse(byte[] response) {
+        try {
+            final Image image = Image.ADAPTER.decode(response);
+
+            long ini = Calendar.getInstance().getTimeInMillis();
+            save(image);
+            long end = Calendar.getInstance().getTimeInMillis();
+
+            benchmark.totalDatabase = benchmark.totalDatabase + (end - ini);
+        }
+        catch (IOException io) {
+            Log.e(TAG, "Error decoding message from websocket server");
+        }
+
+        benchmark.totalResponses += 1;
+
+        if (benchmark.isFinished && benchmark.totalResponses == TOTAL_REQUESTS) {
+            long end = Calendar.getInstance().getTimeInMillis();
+            benchmark.totalAPI = end - benchmark.startTime - benchmark.totalDatabase ;
+
+            long totalTime = benchmark.totalAPI + benchmark.totalDatabase;
+            Log.i(TAG, ":::::::::::: Benchmark WebSockets");
+            Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
+            Log.i(TAG, ":::::::::::: Total API = " + benchmark.totalAPI + " milliseconds");
+            Log.i(TAG, ":::::::::::: Total DB = " + benchmark.totalDatabase + " milliseconds");
+        }
+    }
+
+    @Override
+    public Context getContext() {
+        return this;
+    }
 }

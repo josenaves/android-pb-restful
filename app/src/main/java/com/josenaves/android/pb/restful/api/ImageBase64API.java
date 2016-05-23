@@ -21,8 +21,12 @@ public class ImageBase64API {
     private Retrofit retrofitBase64;
 
     public ImageBase64API(Context context) {
+
+        String host = String.format("http://%s:%s/",
+                PreferencesUtils.getHost(context), PreferencesUtils.getHttpPort(context));
+
         retrofitBase64 = new Retrofit.Builder()
-                .baseUrl(PreferencesUtils.getServerHost(context))
+                .baseUrl(host)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
     }
