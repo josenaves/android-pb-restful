@@ -377,6 +377,8 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
 
     @Override
     public void onResponse(byte[] response) {
+        Log.d(TAG, "WS packet size: " + response.length);
+
         try {
             final Image image = Image.ADAPTER.decode(response);
 
