@@ -6,6 +6,7 @@ import com.koushikdutta.async.DataEmitter;
 import com.koushikdutta.async.callback.DataCallback;
 import com.koushikdutta.async.http.AsyncHttpClient;
 import com.koushikdutta.async.http.AsyncHttpClient.WebSocketConnectCallback;
+import com.koushikdutta.async.http.ConnectionFailedException;
 import com.koushikdutta.async.http.WebSocket;
 import android.util.Log;
 
@@ -21,12 +22,11 @@ public final class WebSocketService {
 
     private WebSocketAPI wsClient;
 
-    private Context context;
     private String wsURI;
 
     public WebSocketService(WebSocketAPI wsClient) {
+        Context context = wsClient.getContext();
         this.wsClient = wsClient;
-        this.context = wsClient.getContext();
         this.wsURI = String.format("ws://%s:%s",
                 PreferencesUtils.getHost(context),
                 PreferencesUtils.getWebsocketPort(context));
@@ -37,9 +37,13 @@ public final class WebSocketService {
             @Override
             public void onCompleted(Exception ex, WebSocket ws) {
                 if (ex != null) {
+                    Log.e(TAG, ":( Exception: " + ex.getMessage());
                     if (ex instanceof TimeoutException) {
-                        Log.e(TAG, "Timeout - server must be down :(");
+                        Log.e(TAG, ":( TimeoutException: " + ex.getMessage());
                         wsClient.onTimeout((TimeoutException)ex);
+                    }
+                    else {
+                        wsClient.onException(ex);
                     }
                     return;
                 }

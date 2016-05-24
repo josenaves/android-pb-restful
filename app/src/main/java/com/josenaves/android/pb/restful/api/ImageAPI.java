@@ -6,6 +6,8 @@ import com.josenaves.android.pb.restful.Image;
 import com.josenaves.android.pb.restful.PreferencesUtils;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -44,15 +46,19 @@ public class ImageAPI {
         return null;
     }
 
-    public Image getFlorianoplisImage() {
+    public Image getFlorianoplisImage() throws Exception {
         ImageService service = retrofit.create(ImageService.class);
         Call<Image> image = service.getImageFlorianopolis();
         try {
             Response<Image> response = image.execute();
             return response.body();
         }
-        catch (IOException io) {
-            Log.e(TAG, io.getMessage());
+        catch (Throwable throwable) {
+            Log.e(TAG, throwable.getMessage());
+
+            if (throwable instanceof SocketTimeoutException) {
+                throw new Exception("Connection timeout");
+            }
         }
         return null;
     }

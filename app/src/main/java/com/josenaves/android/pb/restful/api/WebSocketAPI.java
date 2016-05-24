@@ -6,6 +6,7 @@ import java.util.concurrent.TimeoutException;
 
 public interface WebSocketAPI {
     void onTimeout(TimeoutException e);
+    void onException(Exception e);
     void onResponse(byte[] response);
     Context getContext();
 }

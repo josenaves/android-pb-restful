@@ -13,9 +13,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.josenaves.android.pb.restful.Image;
 import com.josenaves.android.pb.restful.ImageBase64;
+import com.josenaves.android.pb.restful.PreferencesUtils;
 import com.josenaves.android.pb.restful.R;
 import com.josenaves.android.pb.restful.api.ImageAPI;
 import com.josenaves.android.pb.restful.api.ImageBase64API;
@@ -52,6 +55,9 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
     private ImageBase64API imageBase64API;
     private WebSocketService webSocketAPI;
 
+    private MaterialDialog wsDialog;
+
+
     class Benchmark {
         long totalDatabase = 0;
         long totalAPI = 0;
@@ -68,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        refreshActionbarTitle();
 
         // prepare database to use
         dataSource = new ImagesDataSource(this);
@@ -92,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        save(imageAPI.getRandomImage());
+                        //save(imageAPI.getRandomImage());
                     }
                 }).start();
             }
@@ -106,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        save(imageBase64API.getFlorianopolisBase64Image());
+                        //save(imageBase64API.getFlorianopolisBase64Image());
                     }
                 }).start();
             }
@@ -118,29 +126,60 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
             public void onClick(View v) {
                 Log.d(TAG, "::: Benchmark Batch Base64");
                 Log.d(TAG, "Get florianopolis image from server (500 times)...");
+
+                final MaterialDialog dialog = showProgressDialog("Benchmarking JSON with Base64");
+
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         long totalApi = 0, totalDatabase = 0;
                         long ini, end;
                         ImageBase64 image;
-                        for (int i = 0; i < 500; i++) {
+                        for (int i = 0; i < TOTAL_REQUESTS; i++) {
                             ini = Calendar.getInstance().getTimeInMillis();
-                            image = imageBase64API.getFlorianopolisBase64Image();
-                            end = Calendar.getInstance().getTimeInMillis();
-                            totalApi += end - ini;
+                            try {
+                                image = imageBase64API.getFlorianopolisBase64Image();
+                                end = Calendar.getInstance().getTimeInMillis();
+                                totalApi += end - ini;
 
-                            ini = Calendar.getInstance().getTimeInMillis();
-                            save(image);
-                            end = Calendar.getInstance().getTimeInMillis();
-                            totalDatabase += end - ini;
+                                ini = Calendar.getInstance().getTimeInMillis();
+                                save(image);
+                                end = Calendar.getInstance().getTimeInMillis();
+
+                                totalDatabase += end - ini;
+                            } catch (Exception e) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this, "Timeout !", Toast.LENGTH_SHORT).show();
+                                        dialog.dismiss();
+                                    }
+                                });
+                                return;
+                            }
                         }
 
+                        dialog.dismiss();
+
                         long totalTime = totalApi + totalDatabase;
+
                         Log.i(TAG, ":::::::::::: Benchmark Base64");
                         Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
                         Log.i(TAG, ":::::::::::: Total API = " + totalApi + " milliseconds");
                         Log.i(TAG, ":::::::::::: Total DB = " + totalDatabase + " milliseconds");
+
+                        final String content = String.format(
+                                "Total time : %s milliseconds\n" +
+                                        "Total JSON Base64 : %s milliseconds\n" +
+                                        "Total database : %s milliseconds",
+                                totalTime, totalApi, totalDatabase);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                showResultsDialog("JSON with Base64 results", content);
+                            }
+                        });
                     }
                 }).start();
             }
@@ -152,29 +191,60 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
             public void onClick(View v) {
                 Log.d(TAG, "::: Benchmark Batch Protocol Buffers");
                 Log.d(TAG, "Get florianopolis image from server (500 times)...");
+
+                final MaterialDialog dialog = showProgressDialog("Benchmarking Protocol Buffers");
+
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         long totalApi = 0, totalDatabase = 0;
                         long ini, end;
                         Image image;
-                        for (int i = 0; i < 500; i++) {
+                        for (int i = 0; i < TOTAL_REQUESTS; i++) {
                             ini = Calendar.getInstance().getTimeInMillis();
-                            image = imageAPI.getFlorianoplisImage();
-                            end = Calendar.getInstance().getTimeInMillis();
-                            totalApi += end - ini;
+                            try {
+                                image = imageAPI.getFlorianoplisImage();
+                                end = Calendar.getInstance().getTimeInMillis();
+                                totalApi += end - ini;
 
-                            ini = Calendar.getInstance().getTimeInMillis();
-                            save(image);
-                            end = Calendar.getInstance().getTimeInMillis();
-                            totalDatabase += end - ini;
+                                ini = Calendar.getInstance().getTimeInMillis();
+                                save(image);
+                                end = Calendar.getInstance().getTimeInMillis();
+                                totalDatabase += end - ini;
+                            }
+                            catch (Exception e) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        dialog.dismiss();
+                                        Toast.makeText(MainActivity.this, "Timeout !", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                return;
+                            }
                         }
 
+                        dialog.dismiss();
+
                         long totalTime = totalApi + totalDatabase;
+
                         Log.i(TAG, ":::::::::::: Benchmark Protocol Buffers");
                         Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
                         Log.i(TAG, ":::::::::::: Total API = " + totalApi + " milliseconds");
                         Log.i(TAG, ":::::::::::: Total DB = " + totalDatabase + " milliseconds");
+
+                        final String content = String.format(
+                                "Total time : %s milliseconds\n" +
+                                "Total ProtocolBuffers : %s milliseconds\n" +
+                                "Total database : %s milliseconds",
+                                totalTime, totalApi, totalDatabase);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                showResultsDialog("Protocol Buffers over HTTP results", content);
+                            }
+                        });
 
                     }
                 }).start();
@@ -187,6 +257,8 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
             public void onClick(View v) {
                 Log.d(TAG, "::: Benchmark Batch WebSockets");
                 Log.d(TAG, "Get florianopolis image from server (500 times)...");
+
+                wsDialog = showProgressDialog("Benchmarking Protocol Buffers over Websockets");
 
                 benchmark.isFinished = false;
                 new Thread(new Runnable() {
@@ -259,9 +331,48 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
         });
     }
 
+    private MaterialDialog showProgressDialog(String title) {
+        final MaterialDialog dialog = new MaterialDialog.Builder(MainActivity.this)
+                .title(title)
+                .content(R.string.please_wait)
+                .progress(true, 0)
+                .progressIndeterminateStyle(true)
+                .show();
+
+        return dialog;
+    }
+
+    private void showResultsDialog(final String title, final String content) {
+        new MaterialDialog.Builder(MainActivity.this)
+                .title(title)
+                .content(content)
+                .positiveText("Dismiss")
+                .autoDismiss(true)
+                .show();
+    }
+
     @Override
     public void onTimeout(TimeoutException e) {
         Log.e(TAG, "WebSocket - timeout error:" + e.getMessage());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                wsDialog.dismiss();
+                Toast.makeText(MainActivity.this, "Timeout !", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onException(Exception e) {
+        Log.e(TAG, "WebSocket - error:" + e.getMessage());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                wsDialog.dismiss();
+                Toast.makeText(MainActivity.this, "Error with websockets!", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -276,12 +387,18 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
             benchmark.totalDatabase = benchmark.totalDatabase + (end - ini);
         }
         catch (IOException io) {
-            Log.e(TAG, "Error decoding message from websocket server");
+            final String msg = "Error decoding message from websocket server";
+            Log.e(TAG, msg + " - " + io.getMessage());
+            wsDialog.dismiss();
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         }
 
         benchmark.totalResponses += 1;
 
         if (benchmark.isFinished && benchmark.totalResponses == TOTAL_REQUESTS) {
+
+            wsDialog.dismiss();
+
             long end = Calendar.getInstance().getTimeInMillis();
             benchmark.totalAPI = end - benchmark.startTime - benchmark.totalDatabase ;
 
@@ -290,6 +407,19 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
             Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
             Log.i(TAG, ":::::::::::: Total API = " + benchmark.totalAPI + " milliseconds");
             Log.i(TAG, ":::::::::::: Total DB = " + benchmark.totalDatabase + " milliseconds");
+
+            final String content = String.format(
+                    "Total time : %s milliseconds\n" +
+                            "Total ProtocolBuffers WS: %s milliseconds\n" +
+                            "Total database : %s milliseconds",
+                    totalTime, benchmark.totalAPI , benchmark.totalDatabase );
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showResultsDialog("Protocol Buffers over Websockets results", content);
+                }
+            });
         }
     }
 
@@ -297,4 +427,10 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
     public Context getContext() {
         return this;
     }
+
+    public void refreshActionbarTitle() {
+        getSupportActionBar().setTitle(getResources().getString(R.string.app_name) + " - server : " +
+                PreferencesUtils.getHost(this));
+    }
+
 }
