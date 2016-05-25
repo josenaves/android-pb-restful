@@ -47,7 +47,7 @@
         jar="/home/josenaves/Projects/android-pb-restful/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
         jumboMode="true"
         revision="23.0.3"
-        sha1="98ec06874b5bb6ac72dc4ac4cf57d942381d09d1">
+        sha1="8c85369cd5769c620facf19e69a4a545343eb59e">
         <dex dex="/home/josenaves/Projects/android-pb-restful/app/build/intermediates/pre-dexed/debug/instant-run-bootstrap_2bc551fb5c611398f4a2d25d48edf06a68875ab2.jar" />
     </item>
     <item
@@ -124,7 +124,7 @@
         jar="/home/josenaves/Projects/android-pb-restful/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
         jumboMode="true"
         revision="23.0.3"
-        sha1="8d038c00a2b9ae95ba9b232a8eec5d0f73fafd2d">
+        sha1="245793a661da2a8106a197e4c4a6b95218fc576f">
         <dex dex="/home/josenaves/Projects/android-pb-restful/app/build/intermediates/pre-dexed/debug/instant-run_319aa470b3801941857800d7d47173ba719f5777.jar" />
     </item>
     <item

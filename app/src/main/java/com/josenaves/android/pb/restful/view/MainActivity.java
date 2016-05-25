@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final int TOTAL_REQUESTS = 500;
+    private static final int MAX_REQUESTS = 500;
 
     private ImagesDataSource dataSource;
 
@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
         long totalAPI = 0;
         long startTime = 0;
         long totalResponses = 0;
-        boolean isFinished = false;
     };
 
     final Benchmark benchmark = new Benchmark();
@@ -135,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
                         long totalApi = 0, totalDatabase = 0;
                         long ini, end;
                         ImageBase64 image;
-                        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+                        for (int i = 0; i < MAX_REQUESTS; i++) {
                             ini = Calendar.getInstance().getTimeInMillis();
                             try {
                                 image = imageBase64API.getFlorianopolisBase64Image();
@@ -200,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
                         long totalApi = 0, totalDatabase = 0;
                         long ini, end;
                         Image image;
-                        for (int i = 0; i < TOTAL_REQUESTS; i++) {
+                        for (int i = 0; i < MAX_REQUESTS; i++) {
                             ini = Calendar.getInstance().getTimeInMillis();
                             try {
                                 image = imageAPI.getFlorianoplisImage();
@@ -260,15 +259,14 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
 
                 wsDialog = showProgressDialog("Benchmarking Protocol Buffers over Websockets");
 
-                benchmark.isFinished = false;
+                benchmark.startTime = Calendar.getInstance().getTimeInMillis();
+                benchmark.totalResponses = 0;
+
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        benchmark.startTime = Calendar.getInstance().getTimeInMillis();
-                        for (int i = 0; i < TOTAL_REQUESTS; i++) {
-                            webSocketAPI.request();
-                        }
-                        benchmark.isFinished = true;
+                        Log.d(TAG, "Making a new websocket request - " + benchmark.totalResponses);
+                        webSocketAPI.request();
                     }
                 }).start();
             }
@@ -397,14 +395,15 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
 
         benchmark.totalResponses += 1;
 
-        if (benchmark.isFinished && benchmark.totalResponses == TOTAL_REQUESTS) {
+        if (benchmark.totalResponses == MAX_REQUESTS) {
+
+            long endTime = Calendar.getInstance().getTimeInMillis();
+            long totalTime = endTime - benchmark.startTime;
 
             wsDialog.dismiss();
 
-            long end = Calendar.getInstance().getTimeInMillis();
-            benchmark.totalAPI = end - benchmark.startTime - benchmark.totalDatabase ;
+            benchmark.totalAPI = totalTime - benchmark.totalDatabase;
 
-            long totalTime = benchmark.totalAPI + benchmark.totalDatabase;
             Log.i(TAG, ":::::::::::: Benchmark WebSockets");
             Log.i(TAG, ":::::::::::: Total time = " + totalTime + " milliseconds");
             Log.i(TAG, ":::::::::::: Total API = " + benchmark.totalAPI + " milliseconds");
@@ -422,7 +421,11 @@ public class MainActivity extends AppCompatActivity implements WebSocketAPI {
                     showResultsDialog("Protocol Buffers over Websockets results", content);
                 }
             });
+        } else {
+            Log.d(TAG, "Making a new websocket request - " + benchmark.totalResponses);
+            webSocketAPI.request();
         }
+
     }
 
     @Override
