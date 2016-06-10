@@ -62,4 +62,21 @@ public class ImageAPI {
         }
         return null;
     }
+
+    public Image getTreeImage() throws Exception {
+        ImageService service = retrofit.create(ImageService.class);
+        Call<Image> image = service.getImageTree();
+        try {
+            Response<Image> response = image.execute();
+            return response.body();
+        }
+        catch (Throwable throwable) {
+            Log.e(TAG, throwable.getMessage());
+
+            if (throwable instanceof SocketTimeoutException) {
+                throw new Exception("Connection timeout");
+            }
+        }
+        return null;
+    }
 }

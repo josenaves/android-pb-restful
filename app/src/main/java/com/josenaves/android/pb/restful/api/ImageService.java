@@ -11,4 +11,7 @@ public interface ImageService {
 
     @GET("florianopolis")
     Call<Image> getImageFlorianopolis();
+
+    @GET("tree")
+    Call<Image> getImageTree();
 }

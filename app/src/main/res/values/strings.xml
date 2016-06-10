@@ -9,7 +9,7 @@
     <string name="title_edittext_host">Server IP address</string>
     <string name="summary_edittext_host">Here you can configure server address</string>
     <string name="dialog_title_host">Server host address</string>
-    <string name="default_host">52.207.233.223</string>
+    <string name="default_host">dispatchr.crossover.com</string>
 
     <string name="title_edittext_http_port">Http port</string>
     <string name="summary_edittext_http_port">Here you can configure http port</string>
@@ -21,7 +21,7 @@
     <string name="dialog_ws_port">WebSocket port</string>
     <string name="default_ws_port">9080</string>
 
-    <string name="please_wait">Please wait...</string>
+    <string name="please_wait">Please wait…</string>
 
 
 </resources>

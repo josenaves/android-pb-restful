@@ -61,13 +61,13 @@ public final class StorageUtils {
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
         int second = cal.get(Calendar.SECOND);
-        int milisecond = cal.get(Calendar.MILLISECOND);
+        int millisecond = cal.get(Calendar.MILLISECOND);
 
         String absolutePath = String.format("%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/",
                 Environment.getExternalStorageDirectory().getAbsolutePath(),
                 PREFIX,
                 packageName,
-                year, month, day, hour, minute, second, milisecond);
+                year, month, day, hour, minute, second, millisecond);
 
         Log.d(TAG, absolutePath);
 
@@ -76,14 +76,11 @@ public final class StorageUtils {
         if (folders.mkdirs()){
             Log.d(TAG, "Folders created at " + absolutePath);
         } else {
-            Log.e(TAG, "Error creatingn dirs");
+            Log.e(TAG, "Error creating dirs");
         }
 
         // get a reference for the file to be created
         File fileToBeSaved = new File(folders, filename);
-
-        boolean saved = false;
-
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(fileToBeSaved);
@@ -111,7 +108,7 @@ public final class StorageUtils {
 
     public static void localFile(Context context) {
         try {
-            // Use Activity method to create a file in the writeable directory
+            // Use Activity method to create a file in the writable directory
             FileOutputStream fos = context.openFileOutput("filename", Context.MODE_WORLD_WRITEABLE);
 
             // Create buffered writer

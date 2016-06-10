@@ -8,4 +8,7 @@ import retrofit2.http.GET;
 public interface ImageBase64Service {
     @GET("base64/florianopolis")
     Call<ImageBase64> getImageFlorianopolisBase64();
+
+    @GET("base64/tree")
+    Call<ImageBase64> getImageTreeBase64();
 }

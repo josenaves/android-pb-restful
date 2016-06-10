@@ -44,4 +44,21 @@ public class ImageBase64API {
         return null;
     }
 
+    public ImageBase64 getTreeBase64Image() throws Exception {
+        ImageBase64Service service = retrofitBase64.create(ImageBase64Service.class);
+        Call<ImageBase64> image = service.getImageTreeBase64();
+        try {
+            Response<ImageBase64> response = image.execute();
+            return response.body();
+        }
+        catch (Throwable throwable) {
+            Log.e(TAG, throwable.getMessage());
+
+            if (throwable instanceof SocketTimeoutException) {
+                throw new Exception("Connection timeout");
+            }
+        }
+        return null;
+    }
+
 }

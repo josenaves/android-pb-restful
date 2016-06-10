@@ -93,13 +93,13 @@ public final class ImagesDataSource {
 
     private Image imageFromCursor(Cursor cursor) {
         String location = cursor.getString(cursor.getColumnIndex(ImagesDatabaseHelper.COLUMN_IMAGE));
-        Image image = new Image.Builder()
+        return new Image.Builder()
                 .id(cursor.getString(cursor.getColumnIndex(ImagesDatabaseHelper.COLUMN_ID)))
                 .name(cursor.getString(cursor.getColumnIndex(ImagesDatabaseHelper.COLUMN_NAME)))
                 .date(cursor.getString(cursor.getColumnIndex(ImagesDatabaseHelper.COLUMN_DATE)))
                 .image_data(ByteString.of(StorageUtils.readFileFromExternalStorage(location)))
                 .build();
-        return image;
+
     }
 
 }
