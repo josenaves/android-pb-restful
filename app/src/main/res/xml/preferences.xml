@@ -25,6 +25,13 @@
             android:summary="@string/summary_edittext_ws_port"
             android:dialogTitle="@string/dialog_ws_port" />
 
+        <EditTextPreference
+            android:key="pref_ws_compress_port"
+            android:defaultValue="@string/default_ws_compress_port"
+            android:title="@string/title_edittext_ws_compress_port"
+            android:summary="@string/summary_edittext_ws_compress_port"
+            android:dialogTitle="@string/dialog_ws_compress_port" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

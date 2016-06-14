@@ -9,7 +9,7 @@ import com.koushikdutta.async.http.AsyncHttpClient.WebSocketConnectCallback;
 import com.koushikdutta.async.http.WebSocket;
 import android.util.Log;
 
-import com.josenaves.android.pb.restful.PreferencesUtils;
+import com.josenaves.android.pb.restful.utils.PreferencesUtils;
 
 import java.util.ArrayList;
 import java.util.List;

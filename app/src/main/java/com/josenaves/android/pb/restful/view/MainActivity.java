@@ -3,7 +3,6 @@ package com.josenaves.android.pb.restful.view;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -17,7 +16,9 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.josenaves.android.pb.restful.Image;
 import com.josenaves.android.pb.restful.ImageBase64;
-import com.josenaves.android.pb.restful.PreferencesUtils;
+import com.josenaves.android.pb.restful.api.UploadAPI;
+import com.josenaves.android.pb.restful.utils.ByteUtils;
+import com.josenaves.android.pb.restful.utils.PreferencesUtils;
 import com.josenaves.android.pb.restful.R;
 import com.josenaves.android.pb.restful.api.ImageAPI;
 import com.josenaves.android.pb.restful.api.ImageBase64API;
@@ -26,8 +27,13 @@ import com.josenaves.android.pb.restful.api.WebSocketService;
 import com.josenaves.android.pb.restful.data.ImagesDataSource;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+
+import okio.ByteString;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,34 +76,6 @@ public class MainActivity extends AppCompatActivity {
         textName = (TextView)findViewById(R.id.text_name);
         textDate = (TextView)findViewById(R.id.text_date);
         textSize = (TextView)findViewById(R.id.text_size);
-
-        FloatingActionButton fabProtocolBuffers = (FloatingActionButton) findViewById(R.id.fab);
-        fabProtocolBuffers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "Getting random image from server...");
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //save(imageAPI.getRandomImage());
-                    }
-                }).start();
-            }
-        });
-
-        FloatingActionButton fabBase64 = (FloatingActionButton) findViewById(R.id.fabSaveBatch);
-        fabBase64.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "Getting base64 image from server...");
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //save(imageBase64API.getFlorianopolisBase64Image());
-                    }
-                }).start();
-            }
-        });
 
         Button buttonBatch64 = (Button) findViewById(R.id.button_base64_batch);
         buttonBatch64.setOnClickListener(new View.OnClickListener() {
@@ -251,6 +229,86 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         Log.d(TAG, "Making a new websocket request - " + benchmark.totalResponses);
                         webSocketAPI.request();
+                    }
+                }).start();
+            }
+        });
+
+        Button buttonBatchUploadPB = (Button) findViewById(R.id.button_upload_batch);
+        buttonBatchUploadPB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "::: Benchmark Batch Upload PB");
+                Log.d(TAG, "Upload tree image to server (500 times)...");
+
+                final UploadAPI api = new UploadAPI(getContext());
+
+                final MaterialDialog dialog = showProgressDialog("Benchmarking Upload PB");
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        long totalApi = 0;
+                        long ini, end;
+                        Image image;
+
+                        for (int i = 0; i < MAX_REQUESTS; i++) {
+                        //for (int i = 0; i < 1; i++) {
+                            ini = Calendar.getInstance().getTimeInMillis();
+                            try {
+                                InputStream inStream = getContext().getResources().openRawResource(R.raw.tree);
+                                byte[] imageBytes = new byte[inStream.available()];
+                                imageBytes = ByteUtils.convertStreamToByteArray(inStream);
+                                inStream.close();
+
+                                String id = UUID.randomUUID().toString();
+                                Calendar cal = Calendar.getInstance();
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss:S");
+                                String date = sdf.format(cal.getTime());
+
+                                ByteString bs = ByteString.of(imageBytes);
+                                Log.d(TAG, "size of bytes:" + imageBytes.length);
+                                Log.d(TAG, "size of ByteString:" + bs.size());
+
+                                image = new Image(id, id + "-tree.jpg", date, bs);
+
+                                api.uploadImage(image);
+
+                                end = Calendar.getInstance().getTimeInMillis();
+                                totalApi += end - ini;
+                            }
+                            catch (Exception e) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        dialog.dismiss();
+                                        Toast.makeText(MainActivity.this, "Timeout !", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                return;
+                            }
+                        }
+
+                        dialog.dismiss();
+
+                        long average = totalApi/MAX_REQUESTS;
+
+                        Log.i(TAG, ":::::::::::: Benchmark Batch Upload PB");
+                        Log.i(TAG, ":::::::::::: Total time = " + totalApi + " milliseconds");
+                        Log.i(TAG, ":::::::::::: Average = " + average + " milliseconds");
+
+                        final String content = String.format(
+                                "Total time : %s milliseconds\n" +
+                                        "Average: %s milliseconds",
+                                totalApi, average);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                showResultsDialog("Upload image results", content);
+                            }
+                        });
+
                     }
                 }).start();
             }
@@ -450,6 +508,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        refreshActionbarTitle();
         webSocketAPI = new WebSocketService(getContext());
         webSocketAPI.registerListener(mainSocketListener);
         webSocketAPI.registerListener(requestSocketListener);
