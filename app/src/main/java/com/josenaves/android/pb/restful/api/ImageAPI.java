@@ -3,7 +3,7 @@ package com.josenaves.android.pb.restful.api;
 import android.content.Context;
 import android.util.Log;
 import com.josenaves.android.pb.restful.Image;
-import com.josenaves.android.pb.restful.PreferencesUtils;
+import com.josenaves.android.pb.restful.utils.PreferencesUtils;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;

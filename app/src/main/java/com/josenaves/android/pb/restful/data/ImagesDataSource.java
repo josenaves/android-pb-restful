@@ -10,7 +10,7 @@ import android.util.Log;
 
 import com.josenaves.android.pb.restful.Image;
 import com.josenaves.android.pb.restful.ImageBase64;
-import com.josenaves.android.pb.restful.StorageUtils;
+import com.josenaves.android.pb.restful.utils.StorageUtils;
 
 import java.util.ArrayList;
 import java.util.List;

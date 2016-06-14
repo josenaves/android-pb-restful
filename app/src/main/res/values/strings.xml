@@ -21,6 +21,11 @@
     <string name="dialog_ws_port">WebSocket port</string>
     <string name="default_ws_port">9080</string>
 
+    <string name="title_edittext_ws_compress_port">Compress Webservice port</string>
+    <string name="summary_edittext_ws_compress_port">Here you can configure compress service port</string>
+    <string name="dialog_ws_compress_port">Upload use case port</string>
+    <string name="default_ws_compress_port">7070</string>
+
     <string name="please_wait">Please wait…</string>
 
 
