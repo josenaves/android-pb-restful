@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final int MAX_REQUESTS = 500;
+    private static final int MAX_REQUESTS = 1;
 
     private ImagesDataSource dataSource;
 

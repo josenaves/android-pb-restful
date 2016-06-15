@@ -1,11 +1,16 @@
 package com.josenaves.android.pb.restful.api;
 
 import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
 import com.josenaves.android.pb.restful.Image;
 import com.josenaves.android.pb.restful.utils.PreferencesUtils;
+import com.josenaves.android.pb.restful.utils.StorageUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 
@@ -27,7 +32,10 @@ public class UploadAPI {
 
     private Retrofit retrofit;
 
+    private Context context;
+
     public UploadAPI(Context context) {
+        this.context = context;
         String host = String.format("http://%s:%s/",
                 PreferencesUtils.getHost(context), PreferencesUtils.getPrefWsCompressPort(context));
 
@@ -46,7 +54,10 @@ public class UploadAPI {
         UploadService service = retrofit.create(UploadService.class);
 
         byte[] encodedData = imageToUpload.encode();
-        Log.d(TAG, String.format("Size of encoded data to be transfered: %s bytes", encodedData.length));
+        Log.d(TAG, String.format("Size of encoded data to be transferred: %s bytes", encodedData.length));
+
+        // just to get a file with binary data encoded with Protocol Buffers --> will be used in load tests
+        //saveBinaryPost(encodedData);
 
         RequestBody requestBody = RequestBody
                 .create(MediaType.parse("application/x-protobuf"), encodedData);
@@ -65,25 +76,54 @@ public class UploadAPI {
         }
     }
 
-}
+    /**
+     * Save a copy of POST request that is sent in POST request in the filesystem.
+     * It will be used just one time to get a file with binary data encoded with
+     * Protocol Buffers --> will be used in load tests.
+     */
+    private void saveBinaryPost(byte[] protocolBuffersData) {
 
-class LoggingInterceptor implements Interceptor {
+        String packageName= context.getApplicationContext().getPackageName();
 
-    private static final String TAG = LoggingInterceptor.class.getSimpleName();
+        String absolutePath = String.format("/%s/%s/%s/",
+                //Environment.getExternalStorageDirectory().getAbsolutePath(),
+                "sdcard",
+                "Android/data",
+                packageName);
 
-    @Override public okhttp3.Response intercept(Interceptor.Chain chain) throws IOException {
-        Request request = chain.request();
+        Log.d(TAG, String.format("Path where the post.bin will be saved: %s" ,absolutePath));
 
-        long t1 = System.nanoTime();
-        Log.i(TAG, String.format("Sending request %s on %s%n%s",
-                request.url(), chain.connection(), request.headers()));
+        // create the directory structure
+        File folder = new File(absolutePath);
+        if (folder.mkdirs()){
+            Log.d(TAG, "Folders created at " + absolutePath);
+        } else {
+            Log.e(TAG, "Error creating dirs");
+        }
 
-        okhttp3.Response response = chain.proceed(request);
-
-        long t2 = System.nanoTime();
-        Log.i(TAG, String.format("Received response for %s in %.1fms%n%s",
-                response.request().url(), (t2 - t1) / 1e6d, response.headers()));
-
-        return response;
+        // get a reference for the file to be created
+        File fileToBeSaved = new File(folder, "post.bin");
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(fileToBeSaved);
+            fos.write(protocolBuffersData);
+            fos.close();
+            Log.d(TAG, fileToBeSaved.getAbsolutePath());
+        }
+        catch(FileNotFoundException fnf) {
+            Log.e(TAG, "Could not find path: " +  fnf.getMessage());
+        }
+        catch(IOException io){
+            Log.e(TAG, io.getMessage());
+        }
+        finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException io){
+                    Log.e(TAG, "Error closing file: " + io.getMessage());
+                }
+            }
+        }
     }
 }
